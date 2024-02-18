@@ -271,7 +271,7 @@ class HT301:
 
     def __enter__(self):
         return self
-        
+
     def __exit__(self, type, value, traceback):
         self.release()
 
@@ -309,6 +309,10 @@ class HT301:
         while not frame_ok:
             ret, frame_raw, frame, meta = self.read_()
             device_strings = device_info(meta)
+
+            frame_ok = True
+            break
+
             if device_strings[3] == 'T3-317-13': frame_ok = True
             elif device_strings[4] == 'T3-317-13': frame_ok = True
             elif device_strings[5] == 'T3S-A13': frame_ok = True
