@@ -6,14 +6,11 @@ import ht301_hacklib
 import utils
 import time
 from skimage.exposure import rescale_intensity, equalize_hist
+from flask import Flask, Response
+
+app = Flask(__name__)
 
 draw_temp = True
-
-cap = ht301_hacklib.HT301(4)
-# cap = ht301_hacklib.T2SPLUS()
-window_name = str(type(cap).__name__)
-cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-
 orientation = 0  # 0, 90, 180, 270
 
 
@@ -111,101 +108,125 @@ class FpsCounter:
             return None
 
 
-fps_counter = FpsCounter(alpha=0.8)
-upscale_factor = 2
+def generate_frames():
 
-while True:
-    ret, frame = cap.read()
-    fps_counter.update()
-    shape = frame.shape[0]
-    info, lut = cap.info()
-    frame = frame.astype(np.float32)
+    cap = ht301_hacklib.HT301()
+    window_name = str(type(cap).__name__)
+    # cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
 
-    # Sketchy auto-exposure
-    frame = rescale_intensity(
-        equalize_hist(frame), in_range="image", out_range=(0, 255)
-    ).astype(np.uint8)
+    fps_counter = FpsCounter(alpha=0.8)
+    upscale_factor = 2
 
-    frame = cv2.applyColorMap(frame, cv2.COLORMAP_INFERNO)
+    while True:
+        ret, frame = cap.read()
+        fps_counter.update()
+        shape = frame.shape[0]
+        info, lut = cap.info()
+        frame = frame.astype(np.float32)
 
-    frame = increase_luminance_contrast(frame)
+        # Sketchy auto-exposure
+        frame = rescale_intensity(
+            equalize_hist(frame), in_range="image", out_range=(0, 255)
+        ).astype(np.uint8)
 
-    frame = rotate_frame(frame, orientation)
+        # frame = cv2.applyColorMap(frame, cv2.COLORMAP_INFERNO)
 
-    frame = draw_rectangle_around_brightest(frame)
+        # frame = increase_luminance_contrast(frame)
 
-    frame = np.kron(frame, np.ones((upscale_factor, upscale_factor, 1))).astype(
-        np.uint8
-    )
-    if draw_temp:
-        utils.drawTemperature(
-            frame,
-            rotatate_coordinate(
-                map(lambda x: upscale_factor * x, info["Tmin_point"]),
-                (cap.FRAME_WIDTH * upscale_factor, cap.FRAME_HEIGHT * upscale_factor),
-                orientation,
-            ),
-            info["Tmin_C"],
-            (255, 128, 128),
-        )
-        utils.drawTemperature(
-            frame,
-            rotatate_coordinate(
-                map(lambda x: upscale_factor * x, info["Tmax_point"]),
-                (cap.FRAME_WIDTH * upscale_factor, cap.FRAME_HEIGHT * upscale_factor),
-                orientation,
-            ),
-            info["Tmax_C"],
-            (0, 128, 255),
-        )
-        utils.drawTemperature(
-            frame,
-            rotatate_coordinate(
-                map(lambda x: upscale_factor * x, info["Tcenter_point"]),
-                (cap.FRAME_WIDTH * upscale_factor, cap.FRAME_HEIGHT * upscale_factor),
-                orientation,
-            ),
-            info["Tcenter_C"],
-            (255, 255, 255),
-        )
-        # draw fps
+        frame = rotate_frame(frame, orientation)
 
-        # to keep the fps displayed from jittering too much, we average the last 10 frames
-        cv2.putText(
-            frame,
-            f"FPS: {fps_counter.get_fps():0.1f}",
-            (2, 12),
-            cv2.FONT_HERSHEY_PLAIN,
-            1,
-            (255, 255, 255),
-            1,
-            cv2.LINE_8,
-        )
+        # frame = draw_rectangle_around_brightest(frame)
 
-    cv2.imshow(window_name, frame)
-    key = cv2.waitKey(1) & 0xFF
-    if key == ord("q"):
-        break
-    if key == ord("u"):
-        cap.calibrate()
-    if key == ord("k"):
-        cap.temperature_range_normal()
-        # some delay is needed before calibration
-        for _ in range(50):
-            cap.read()
-        cap.calibrate()
-    if key == ord("l"):
-        cap.temperature_range_high()
-        # some delay is needed before calibration
-        for _ in range(50):
-            cap.read()
-        cap.calibrate()
-    if key == ord("s"):
-        cv2.imwrite(time.strftime("%Y-%m-%d_%H-%M-%S") + ".png", frame)
-    if key == ord("o"):
-        orientation = (orientation - 90) % 360
-        (_, _, w, h) = cv2.getWindowImageRect(window_name)
-        cv2.resizeWindow(window_name, h, w)
+        # frame = np.kron(frame, np.ones((upscale_factor, upscale_factor, 1))).astype(
+        #     np.uint8
+        # )
+        if draw_temp:
+            utils.drawTemperature(
+                frame,
+                rotatate_coordinate(
+                    map(lambda x: upscale_factor * x, info["Tmin_point"]),
+                    (cap.FRAME_WIDTH * upscale_factor, cap.FRAME_HEIGHT * upscale_factor),
+                    orientation,
+                ),
+                info["Tmin_C"],
+                (255, 128, 128),
+            )
+            utils.drawTemperature(
+                frame,
+                rotatate_coordinate(
+                    map(lambda x: upscale_factor * x, info["Tmax_point"]),
+                    (cap.FRAME_WIDTH * upscale_factor, cap.FRAME_HEIGHT * upscale_factor),
+                    orientation,
+                ),
+                info["Tmax_C"],
+                (0, 128, 255),
+            )
+            utils.drawTemperature(
+                frame,
+                rotatate_coordinate(
+                    map(lambda x: upscale_factor * x, info["Tcenter_point"]),
+                    (cap.FRAME_WIDTH * upscale_factor, cap.FRAME_HEIGHT * upscale_factor),
+                    orientation,
+                ),
+                info["Tcenter_C"],
+                (255, 255, 255),
+            )
+            # draw fps
 
-cap.release()
-cv2.destroyAllWindows()
+            # to keep the fps displayed from jittering too much, we average the last 10 frames
+            cv2.putText(
+                frame,
+                f"FPS: {fps_counter.get_fps():0.1f}",
+                (2, 12),
+                cv2.FONT_HERSHEY_PLAIN,
+                1,
+                (255, 255, 255),
+                1,
+                cv2.LINE_8,
+            )
+
+        # cv2.imshow(window_name, frame)
+
+        # Web
+        _, buffer = cv2.imencode('.jpg', frame)
+        frame = buffer.tobytes()
+
+        yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+
+
+        # key = cv2.waitKey(1) & 0xFF
+        # if key == ord("q"):
+        #     break
+        # if key == ord("u"):
+        #     cap.calibrate()
+        # if key == ord("k"):
+        #     cap.temperature_range_normal()
+        #     # some delay is needed before calibration
+        #     for _ in range(50):
+        #         cap.read()
+        #     cap.calibrate()
+        # if key == ord("l"):
+        #     cap.temperature_range_high()
+        #     # some delay is needed before calibration
+        #     for _ in range(50):
+        #         cap.read()
+        #     cap.calibrate()
+        # if key == ord("s"):
+        #     cv2.imwrite(time.strftime("%Y-%m-%d_%H-%M-%S") + ".png", frame)
+        # if key == ord("o"):
+        #     orientation = (orientation - 90) % 360
+        #     (_, _, w, h) = cv2.getWindowImageRect(window_name)
+        #     cv2.resizeWindow(window_name, h, w)
+
+    cap.release()
+    # cv2.destroyAllWindows()
+
+
+@app.route('/video_feed')
+def video_feed():
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+if __name__ == '__main__':
+    app.run(debug=True, threaded=True, host='0.0.0.0')
