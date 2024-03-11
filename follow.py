@@ -79,56 +79,67 @@ def adjust_servo_position(x, y, w, h, frame_shape):
     # Adjust the servo positions based on the difference
     # The sensitivity factors (0.001) determine how much the servo moves per pixel difference
     # You might need to adjust these factors based on your setup
-    # sensitivity_x = 0.001
     sensitivity_y = -0.0001
     
-    # horizontal_adjustment = sensitivity_x * dx
-    vertical_adjustment = sensitivity_y * dy
-    
-    # Update servo positions
-    # Make sure the adjustments are within the servo's range
-    # new_horizontal_value = servoHorizontal.value + horizontal_adjustment
+    vertical_adjustment = sensitivity_y * dy    
     new_vertical_value = servoVertical.value + vertical_adjustment
-    
-    # Clamp the servo values to their allowed range to avoid errors
-    # new_horizontal_value = max(min(new_horizontal_value, 1), -1)
     new_vertical_value = max(min(new_vertical_value, VERTICAL_MAX), VERTICAL_MIN)
     
-    # servoHorizontal.value = new_horizontal_value
     servoVertical.value = new_vertical_value
 
-    print(dy, servoVertical.value, vertical_adjustment, new_vertical_value)
+    # print(dx, dy, servoVertical.value, vertical_adjustment, new_vertical_value)
+
+    max_speed = 0.2  # Maximum speed setting for your servo. Adjust as necessary.
+    min_speed = 0.05
+    
+    # Adjust the horizontal servo speed based on dx
+    if dx != 0:
+        direction = -1 * np.sign(dx)  # Determines the direction to move
+        # Proportion of the frame's width that the object is away from center
+        proportion_of_width = abs(dx) / frame_shape[1]
+        horizontal_speed = max_speed * proportion_of_width
+
+        servoHorizontal.value = direction * max(min(horizontal_speed, max_speed), min_speed)
+    else:
+        # If dx is 0, stop the servo
+        servoHorizontal.value = 0
 
 def generate_frames():
 
     cap = ht301_hacklib.HT301()
 
-    while True:
-        ret, frame = cap.read()
-        frame = frame.astype(np.float32)
+    try:
+        while True:
+            ret, frame = cap.read()
+            frame = frame.astype(np.float32)
 
-        # Sketchy auto-exposure
-        frame = rescale_intensity(
-            equalize_hist(frame), in_range="image", out_range=(0, 255)
-        ).astype(np.uint8)
+            # Sketchy auto-exposure
+            frame = rescale_intensity(
+                equalize_hist(frame), in_range="image", out_range=(0, 255)
+            ).astype(np.uint8)
 
-        frame = cv2.applyColorMap(frame, cv2.COLORMAP_INFERNO)
+            frame = cv2.applyColorMap(frame, cv2.COLORMAP_INFERNO)
 
-        frame = rotate_frame(frame, orientation)
+            frame = rotate_frame(frame, orientation)
 
-        boundary = detect_brightest_area_boundary(frame)
+            boundary = detect_brightest_area_boundary(frame)
 
-        if boundary is not None:
-            x, y, w, h = boundary
-            frame = draw_rectangle(frame, x, y, w, h)
+            if boundary is not None:
+                x, y, w, h = boundary
+                frame = draw_rectangle(frame, x, y, w, h)
 
-            adjust_servo_position(x, y, w, h, frame.shape)
-            
-        # Web
-        _, buffer = cv2.imencode('.jpg', frame)
-        frame = buffer.tobytes()
+                adjust_servo_position(x, y, w, h, frame.shape)
+                
+            # Web
+            _, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
 
-        yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+    
+    except KeyboardInterrupt:
+        servoHorizontal.value = 0
+    except Exception as e:
+        servoHorizontal.value = 0
 
     cap.release()
 
