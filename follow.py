@@ -65,18 +65,47 @@ def draw_rectangle(frame, x, y, w, h):
 
     return frame
 
+def adjust_servo_position(x, y, w, h, frame_shape):
+    # Calculate the center of the frame
+    frame_center_x, frame_center_y = frame_shape[1] // 2, frame_shape[0] // 2
+    
+    # Calculate the center of the bright area
+    bright_center_x, bright_center_y = x + w // 2, y + h // 2
+    
+    # Calculate the difference between the centers
+    dx = bright_center_x - frame_center_x
+    dy = bright_center_y - frame_center_y
+    
+    # Adjust the servo positions based on the difference
+    # The sensitivity factors (0.001) determine how much the servo moves per pixel difference
+    # You might need to adjust these factors based on your setup
+    # sensitivity_x = 0.001
+    sensitivity_y = -0.0001
+    
+    # horizontal_adjustment = sensitivity_x * dx
+    vertical_adjustment = sensitivity_y * dy
+    
+    # Update servo positions
+    # Make sure the adjustments are within the servo's range
+    # new_horizontal_value = servoHorizontal.value + horizontal_adjustment
+    new_vertical_value = servoVertical.value + vertical_adjustment
+    
+    # Clamp the servo values to their allowed range to avoid errors
+    # new_horizontal_value = max(min(new_horizontal_value, 1), -1)
+    new_vertical_value = max(min(new_vertical_value, VERTICAL_MAX), VERTICAL_MIN)
+    
+    # servoHorizontal.value = new_horizontal_value
+    servoVertical.value = new_vertical_value
+
+    print(dy, servoVertical.value, vertical_adjustment, new_vertical_value)
+
 def generate_frames():
 
     cap = ht301_hacklib.HT301()
 
-    upscale_factor = 1
-
     while True:
         ret, frame = cap.read()
-        shape = frame.shape[0]
         frame = frame.astype(np.float32)
-
-        print(frame.shape)
 
         # Sketchy auto-exposure
         frame = rescale_intensity(
@@ -93,10 +122,8 @@ def generate_frames():
             x, y, w, h = boundary
             frame = draw_rectangle(frame, x, y, w, h)
 
-        frame = np.kron(frame, np.ones((upscale_factor, upscale_factor, 1))).astype(
-            np.uint8
-        )
-
+            adjust_servo_position(x, y, w, h, frame.shape)
+            
         # Web
         _, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
