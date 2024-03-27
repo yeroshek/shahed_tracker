@@ -15,15 +15,15 @@ VERTICAL_MAX = 0.85
 
 Device.pin_factory = PiGPIOFactory()
 
-servoHorizontal = Servo(15, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
-servoVertical = Servo(14, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
+servoHorizontal = Servo(18, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
+servoVertical = Servo(15, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
 
 servoHorizontal.value = 0
 servoVertical.value = VERTICAL_MIN
 
 app = Flask(__name__)
 
-orientation = 0 # 0, 90, 180, 270
+orientation = 180 # 0, 90, 180, 270
 
 def rotate_frame(frame, orientation):
     if orientation == 0:
@@ -79,7 +79,7 @@ def adjust_servo_position(x, y, w, h, frame_shape):
     # Adjust the servo positions based on the difference
     # The sensitivity factors (0.001) determine how much the servo moves per pixel difference
     # You might need to adjust these factors based on your setup
-    sensitivity_y = -0.0001
+    sensitivity_y = -0.00015
     
     vertical_adjustment = sensitivity_y * dy    
     new_vertical_value = servoVertical.value + vertical_adjustment
