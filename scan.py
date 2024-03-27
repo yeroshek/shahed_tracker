@@ -3,7 +3,7 @@ from gpiozero.pins.pigpio import PiGPIOFactory
 from time import sleep
 
 SLEEP_HORIZONTAL_TIME = 0.45
-HORIZONTAL_SPEED = 0.1
+HORIZONTAL_STEPS = 6
 
 VERTICAL_MIN = -0.85
 VERTICAL_MAX = 0.85
@@ -12,18 +12,16 @@ VERTICAL_STEPS = 50
 
 Device.pin_factory = PiGPIOFactory()
 
-servoHorizontal = Servo(14, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
+servoHorizontal = Servo(18, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
 servoVertical = Servo(15, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
 
-servoHorizontal.value = 0
+servoHorizontal.value = -1
 servoVertical.value = VERTICAL_MIN
 
 
-def rotate_horizontal(steps):
-    sign = -1 if steps < 0 else 1
-    servoHorizontal.value = sign * HORIZONTAL_SPEED
-    sleep(abs(steps) * SLEEP_HORIZONTAL_TIME)
-    servoHorizontal.value = 0
+def rotate_horizontal(value):
+    servoHorizontal.value = value
+    sleep(SLEEP_HORIZONTAL_TIME)
 
 def smooth_transition(start, end, steps):
     step_value = (end - start) / (steps - 1)
@@ -37,11 +35,11 @@ def scan_vertical():
         sleep(SLEEP_VERTICAL_TIME / VERTICAL_STEPS)
 
 def scan_air():
-    for _ in range(6):
+    for horizontalValue in smooth_transition(-1, 1, HORIZONTAL_STEPS):
         scan_vertical()
-        rotate_horizontal(1)
+        rotate_horizontal(horizontalValue)
     
-    rotate_horizontal(-7)
+    rotate_horizontal(-1)
 
 try:
     while True:
