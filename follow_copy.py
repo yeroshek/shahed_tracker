@@ -89,11 +89,20 @@ def adjust_servo_position(x, y, w, h, frame_shape):
 
     # print(dx, dy, servoVertical.value, vertical_adjustment, new_vertical_value)
 
-    horizontal_adjustment = sensitivity_y * dx    
-    new_horizontal_value = servoHorizontal.value + horizontal_adjustment
-    new_horizontal_value = max(min(new_horizontal_value, VERTICAL_MAX), VERTICAL_MIN)
+    max_speed = 0.2  # Maximum speed setting for your servo. Adjust as necessary.
+    min_speed = 0.05
+    
+    # Adjust the horizontal servo speed based on dx
+    if dx != 0:
+        direction = -1 * np.sign(dx)  # Determines the direction to move
+        # Proportion of the frame's width that the object is away from center
+        proportion_of_width = abs(dx) / frame_shape[1]
+        horizontal_speed = max_speed * proportion_of_width
 
-    servoHorizontal.value = new_horizontal_value
+        servoHorizontal.value = direction * max(min(horizontal_speed, max_speed), min_speed)
+    else:
+        # If dx is 0, stop the servo
+        servoHorizontal.value = 0
 
 def generate_frames():
 
