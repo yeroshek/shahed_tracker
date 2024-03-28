@@ -96,37 +96,54 @@ def adjust_servo_position(x, y, w, h, frame_shape):
     servoHorizontal.value = new_horizontal_value
 
 def generate_frames():
-
     cap = ht301_hacklib.HT301()
+    prev_frame = None  # Initialize variable to store the previous frame
 
     try:
         while True:
             ret, frame = cap.read()
+            if not ret:
+                continue  # If no frame is captured, skip the rest of the loop
+
             frame = frame.astype(np.float32)
 
-            # Sketchy auto-exposure
-            frame = rescale_intensity(
+            frame_processed = rescale_intensity(
                 equalize_hist(frame), in_range="image", out_range=(0, 255)
             ).astype(np.uint8)
 
-            frame = cv2.applyColorMap(frame, cv2.COLORMAP_INFERNO)
+            frame_processed = cv2.applyColorMap(frame_processed, cv2.COLORMAP_INFERNO)
+            frame_processed = rotate_frame(frame_processed, orientation)
 
-            frame = rotate_frame(frame, orientation)
+            # Convert to grayscale for motion detection
+            gray = cv2.cvtColor(frame_processed, cv2.COLOR_BGR2GRAY)
+            
+            if prev_frame is not None:
+                frame_diff = cv2.absdiff(prev_frame, gray)
+                _, thresh = cv2.threshold(frame_diff, 25, 255, cv2.THRESH_BINARY)
+                contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-            boundary = detect_brightest_area_boundary(frame)
+                # Find the brightest area in the current frame for comparison
+                boundary = detect_brightest_area_boundary(frame_processed)
+                if boundary is not None:
+                    x, y, w, h = boundary
+                    for cnt in contours:
+                        # Calculate bounding box of each contour
+                        x_m, y_m, w_m, h_m = cv2.boundingRect(cnt)
+                        # Check if the moving object's bounding box intersects with the brightest object's bounding box
+                        if (x < x_m + w_m and x + w > x_m and y < y_m + h_m and y + h > y_m):
+                            # If it intersects, it's our object of interest. Draw and track it.
+                            frame_processed = draw_rectangle(frame_processed, x, y, w, h)
+                            adjust_servo_position(x, y, w, h, frame_processed.shape)
+                            break
 
-            if boundary is not None:
-                x, y, w, h = boundary
-                frame = draw_rectangle(frame, x, y, w, h)
+            # Update the previous frame and proceed
+            prev_frame = gray
 
-                adjust_servo_position(x, y, w, h, frame.shape)
-                
-            # Web
-            _, buffer = cv2.imencode('.jpg', frame)
-            frame = buffer.tobytes()
+            # Encoding and yielding the frame for web streaming
+            _, buffer = cv2.imencode('.jpg', frame_processed)
+            frame_bytes = buffer.tobytes()
+            yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
 
-            yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-    
     except KeyboardInterrupt:
         servoHorizontal.value = 0
     except Exception as e:
