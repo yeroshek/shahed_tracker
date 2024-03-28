@@ -36,8 +36,8 @@ def scan_vertical():
 
 def scan_air():
     for horizontalValue in smooth_transition(-1, 1, HORIZONTAL_STEPS):
-        scan_vertical()
         rotate_horizontal(horizontalValue)
+        scan_vertical()
     
     rotate_horizontal(-1)
 
