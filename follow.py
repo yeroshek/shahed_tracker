@@ -85,15 +85,28 @@ def adjust_servo_position(x, y, w, h, frame_shape):
     new_vertical_value = servoVertical.value + vertical_adjustment
     new_vertical_value = max(min(new_vertical_value, VERTICAL_MAX), VERTICAL_MIN)
     
-    servoVertical.value = new_vertical_value
-
-    # print(dx, dy, servoVertical.value, vertical_adjustment, new_vertical_value)
-
     horizontal_adjustment = sensitivity_y * dx    
     new_horizontal_value = servoHorizontal.value + horizontal_adjustment
-    new_horizontal_value = max(min(new_horizontal_value, VERTICAL_MAX), VERTICAL_MIN)
+    
+    # object_out_of_bounds = False
+    
+    # if new_horizontal_value > 1:
+    #     new_horizontal_value = -1
+    #     new_vertical_value = -1 * new_vertical_value
+    #     object_out_of_bounds = True
+
+    # elif new_horizontal_value < -1:
+    #     new_horizontal_value = 1
+    #     new_vertical_value = -1 * new_vertical_value
+    #     object_out_of_bounds = True
 
     servoHorizontal.value = new_horizontal_value
+    servoVertical.value = new_vertical_value
+
+    # if object_out_of_bounds:
+    #     time.sleep(0.5)
+
+    print(dx, dy, servoVertical.value + vertical_adjustment, servoHorizontal.value + horizontal_adjustment)
 
 def generate_frames():
     cap = ht301_hacklib.HT301()
@@ -116,7 +129,7 @@ def generate_frames():
 
             # Convert to grayscale for motion detection
             gray = cv2.cvtColor(frame_processed, cv2.COLOR_BGR2GRAY)
-            
+
             if prev_frame is not None:
                 frame_diff = cv2.absdiff(prev_frame, gray)
                 _, thresh = cv2.threshold(frame_diff, 25, 255, cv2.THRESH_BINARY)
