@@ -8,7 +8,7 @@ import mode_scan
 if __name__ == "__main__":
     with multiprocessing.Manager() as manager:
         frames = manager.dict()
-        mode = manager.Value('s', 'HALT')
+        mode = manager.Value('s', 'SCAN')
 
         # Camera indexes
         camera_indexes = [0, 2]
@@ -26,12 +26,12 @@ if __name__ == "__main__":
             video_capture_processes.append(video_capture_process)
 
         # Start video streaming process
-        app = video_streaming.video_streaming(frames)
+        app = video_streaming.video_streaming(frames, mode)
         video_streaming_process = multiprocessing.Process(target=app.run, kwargs={'host': '0.0.0.0', 'port': '5000'})
         video_streaming_process.start()
 
         # Start mode scan process
-        mode_scan_process = multiprocessing.Process(target=mode_scan.start_scan)
+        mode_scan_process = multiprocessing.Process(target=mode_scan.start_scan, args=(mode,))
         mode_scan_process.start()
 
         # Join the processes

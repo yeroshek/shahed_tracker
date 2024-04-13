@@ -15,9 +15,6 @@ Device.pin_factory = PiGPIOFactory()
 servoHorizontal = Servo(18, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
 servoVertical = Servo(15, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
 
-servoHorizontal.value = -1
-servoVertical.value = VERTICAL_MIN
-
 
 def rotate_horizontal(value):
     servoHorizontal.value = value
@@ -41,15 +38,14 @@ def scan_air():
 
     rotate_horizontal(-1)
 
-def start_scan():
+def start_scan(mode):
     servoHorizontal.value = -1
     servoVertical.value = VERTICAL_MIN
 
-    try:
-        while True:
-            scan_air()
+    sleep(SLEEP_HORIZONTAL_TIME)
 
-    except KeyboardInterrupt:
-        servoHorizontal.value = 0
-    except Exception as e:
-        servoHorizontal.value = 0
+    while True:
+        if mode.value == 'SCAN':
+            scan_air()
+        else:
+            sleep(0.25)
