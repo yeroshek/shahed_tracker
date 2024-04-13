@@ -1,23 +1,20 @@
 import cv2
-from flask import Flask, Response
+from flask import Flask, Response, abort
 
 # Define your Flask app
 app = Flask(__name__)
 
-def video_streaming(camera_id, frames):
-    @app.route('/stream')
-    def stream():
+def video_streaming(frames):
+    @app.route('/stream/<int:camera_id>')
+    def stream(camera_id):
+        if camera_id not in frames:
+            abort(404)  # Return a 404 error if camera_id is not in frames
+
         def generate():
             while True:
-                if camera_id in frames:
-                    yield (b'--frame\r\n'
-                           b'Content-Type: image/jpeg\r\n\r\n' + cv2.imencode('.jpg', frames[camera_id])[1].tobytes() + b'\r\n')
-        
+                yield (b'--frame\r\n'
+                    b'Content-Type: image/jpeg\r\n\r\n' + cv2.imencode('.jpg', frames[camera_id])[1].tobytes() + b'\r\n')
+    
         return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
     return app
-
-# Start the process
-if __name__ == "__main__":
-    app = video_streaming(0)  # Stream video from the first camera
-    app.run(host='0.0.0.0', port='5000')

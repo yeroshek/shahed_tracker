@@ -13,7 +13,7 @@ def capture_video(frames, video_source=0, video_length=5, fps=30):
 
     def create_new_video_file(frame_size):
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        video_filename = os.path.join(SAVE_DIR, f'video_{timestamp}.mp4')
+        video_filename = os.path.join(SAVE_DIR, f'video_{timestamp}_{video_source}.mp4')
         return cv2.VideoWriter(video_filename, fourcc, fps, frame_size), video_filename
 
     # A precaution to release the video writer when the script is interrupted
@@ -22,7 +22,6 @@ def capture_video(frames, video_source=0, video_length=5, fps=30):
         if out is not None:
             out.release()
         cv2.destroyAllWindows()
-        sys.exit(0)
 
     signals = [signal.SIGINT, signal.SIGTERM, signal.SIGHUP, signal.SIGQUIT, signal.SIGABRT]
     for sig in signals:
