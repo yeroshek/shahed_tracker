@@ -1,8 +1,9 @@
+import multiprocessing
+import cv2
+
 import frame_manager
 import video_streaming
 import video_capture
-import multiprocessing
-import cv2
 
 if __name__ == "__main__":
     with multiprocessing.Manager() as manager:
