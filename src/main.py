@@ -1,9 +1,19 @@
 import multiprocessing
+import threading
 
 import frame_manager
 import video_streaming
 import video_capture
 import mode_scan
+
+def manage_mode_scan_process(mode, mode_scan_process):
+    while True:
+        if mode.value == 'HALT' and mode_scan_process.is_alive():
+            mode_scan_process.terminate()
+            mode_scan_process.join()
+        elif mode.value == 'SCAN' and not mode_scan_process.is_alive():
+            mode_scan_process = multiprocessing.Process(target=mode_scan.start_scan, args=(mode,))
+            mode_scan_process.start()
 
 if __name__ == "__main__":
     with multiprocessing.Manager() as manager:
@@ -34,6 +44,10 @@ if __name__ == "__main__":
         mode_scan_process = multiprocessing.Process(target=mode_scan.start_scan, args=(mode,))
         mode_scan_process.start()
 
+        # Start the mode scan manager thread
+        mode_scan_manager_thread = threading.Thread(target=manage_mode_scan_process, args=(mode, mode_scan_process))
+        mode_scan_manager_thread.start()
+
         # Join the processes
         for process in frame_manager_processes:
             process.join()
@@ -41,3 +55,4 @@ if __name__ == "__main__":
             process.join()
         video_streaming_process.join()
         mode_scan_process.join()
+        mode_scan_manager_thread.join()

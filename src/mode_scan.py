@@ -45,7 +45,4 @@ def start_scan(mode):
     sleep(SLEEP_HORIZONTAL_TIME)
 
     while True:
-        if mode.value == 'SCAN':
-            scan_air()
-        else:
-            sleep(0.25)
+        scan_air()
