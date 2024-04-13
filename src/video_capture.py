@@ -2,18 +2,33 @@ import cv2
 import time
 import os
 from datetime import datetime
+import signal
+import sys
 
 SAVE_DIR = '../videos/'
 
 def capture_video(frames, video_source=0, video_length=5, fps=30):
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # video codec
-    new_file_started = False
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = None
 
     def create_new_video_file(frame_size):
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')  # Get current time in the format YYYYMMDD_HHMMSS
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         video_filename = os.path.join(SAVE_DIR, f'video_{timestamp}.mp4')
         return cv2.VideoWriter(video_filename, fourcc, fps, frame_size), video_filename
 
+    # A precaution to release the video writer when the script is interrupted
+    def signal_handler(sig, frame):
+        nonlocal out
+        if out is not None:
+            out.release()
+        cv2.destroyAllWindows()
+        sys.exit(0)
+
+    signals = [signal.SIGINT, signal.SIGTERM, signal.SIGHUP, signal.SIGQUIT, signal.SIGABRT]
+    for sig in signals:
+        signal.signal(sig, signal_handler)
+
+    # Wait until the first frame is available
     while True:
         try:
             frame = frames[video_source]
@@ -23,6 +38,7 @@ def capture_video(frames, video_source=0, video_length=5, fps=30):
         if frame is not None:
             break
 
+    new_file_started = False
     frame_size = (frame.shape[1], frame.shape[0])
     start_time = time.time()
 
