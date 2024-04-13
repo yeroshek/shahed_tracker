@@ -1,13 +1,26 @@
 import multiprocessing
 import threading
+from gpiozero import Device, PWMOutputDevice, DigitalInputDevice, Servo
+from gpiozero.pins.pigpio import PiGPIOFactory
 
 import frame_manager
 import video_streaming
 import video_capture
 import mode_scan
 
+Device.pin_factory = PiGPIOFactory()
+buttonIn = DigitalInputDevice(20)
+buttonOut = PWMOutputDevice(21)
+
+buttonOut.on()
+
 def manage_mode_scan_process(mode, mode_scan_process):
     while True:
+        if buttonIn.value == 0:
+            mode.value = 'HALT'
+        else:
+            mode.value = 'SCAN'
+
         if mode.value == 'HALT' and mode_scan_process.is_alive():
             mode_scan_process.terminate()
             mode_scan_process.join()
