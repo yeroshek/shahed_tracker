@@ -12,7 +12,12 @@ def capture_video(frames, video_source=0, video_length=5, fps=30):
 
     def create_new_video_file(frame_size):
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        video_filename = os.path.join(SAVE_DIR, f'video_{timestamp}_{video_source}.mp4')
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        save_dir_path = os.path.join(current_dir, SAVE_DIR)
+        os.makedirs(save_dir_path, exist_ok=True)
+
+        video_filename = os.path.join(save_dir_path, f'video_{timestamp}_{video_source}.mp4')
         return cv2.VideoWriter(video_filename, fourcc, fps, frame_size), video_filename
 
     # A precaution to release the video writer when the script is interrupted
