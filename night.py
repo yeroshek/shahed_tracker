@@ -4,8 +4,8 @@ from flask import Flask, Response
 app = Flask(__name__)
 
 
-def generate_frames():
-    cap = cv2.VideoCapture(0)
+def generate_frames(camN):
+    cap = cv2.VideoCapture(camN)
     
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -35,35 +35,15 @@ def generate_frames():
     # Release the capture and destroy all windows when done
     cap.release()
 
-def generate_frames2():
-    cap = cv2.VideoCapture(2)
-
-    while True:
-        # Read frame
-        ret, frame = cap.read()
-        
-        # If frame is read correctly ret is True
-        if not ret:
-            print("Can't receive frame (stream end?). Exiting ...")
-            break
-
-        _, buffer = cv2.imencode('.jpg', frame)
-        frame = buffer.tobytes()
-
-        yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-
-    # Release the capture and destroy all windows when done
-    cap.release()
-
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(generate_frames(0), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 @app.route('/video_feed2')
 def video_feed2():
-    return Response(generate_frames2(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(generate_frames(2), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 if __name__ == '__main__':
