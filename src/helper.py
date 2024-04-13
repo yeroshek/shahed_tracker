@@ -2,12 +2,16 @@ import cv2
 import datetime
 
 def addTimestamp(frame):
+    if frame is None:
+        return
+
     # Get current time
     now = datetime.datetime.now()
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
 
     # Get frame dimensions
-    height, width, _ = frame.shape
+    height = frame.shape[0]
+    width = frame.shape[1]
 
     # Set font, scale, color, and thickness
     font = cv2.FONT_HERSHEY_SIMPLEX
