@@ -18,8 +18,8 @@ def addTimestamp(frame):
     if width > 400:
         font_scale = 0.5
     else:
-        font_scale = 0.3    
-    
+        font_scale = 0.3
+
     color = (255, 255, 255)  # White color
     stroke = 1
     stroke_color = (0, 0, 0)  # Black color

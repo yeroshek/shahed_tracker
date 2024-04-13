@@ -19,7 +19,7 @@ def video_streaming(frames):
             while True:
                 yield (b'--frame\r\n'
                     b'Content-Type: image/jpeg\r\n\r\n' + cv2.imencode('.jpg', frames[camera_id])[1].tobytes() + b'\r\n')
-    
+
         return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
     return app

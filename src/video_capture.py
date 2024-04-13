@@ -33,7 +33,7 @@ def capture_video(frames, video_source=0, video_length=5, fps=30):
             frame = frames[video_source]
         except KeyError:
             frame = None
-            
+
         if frame is not None:
             break
 

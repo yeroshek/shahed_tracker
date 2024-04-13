@@ -4,6 +4,7 @@ import cv2
 import frame_manager
 import video_streaming
 import video_capture
+import mode_scan
 
 if __name__ == "__main__":
     with multiprocessing.Manager() as manager:
@@ -30,9 +31,14 @@ if __name__ == "__main__":
         video_streaming_process = multiprocessing.Process(target=app.run, kwargs={'host': '0.0.0.0', 'port': '5000'})
         video_streaming_process.start()
 
+        # Start mode scan process
+        mode_scan_process = multiprocessing.Process(target=mode_scan.start_scan)
+        mode_scan_process.start()
+
         # Join the processes
         for process in frame_manager_processes:
             process.join()
         for process in video_capture_processes:
             process.join()
         video_streaming_process.join()
+        mode_scan_process.join()

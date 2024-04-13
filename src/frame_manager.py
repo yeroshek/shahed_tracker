@@ -12,7 +12,7 @@ def capture_frames(frames, camera_id):
         cap = lib.ht301_hacklib.HT301(camera_id)
     else:
         cap = cv2.VideoCapture(camera_id)
-    
+
     while True:
         ret, frame = cap.read()
         if ret:
@@ -25,7 +25,7 @@ def capture_frames(frames, camera_id):
                 ).astype(np.uint8)
 
                 frame = cv2.applyColorMap(frame, cv2.COLORMAP_INFERNO)
-            
+
             addTimestamp(frame)
 
             frames[camera_id] = frame
