@@ -8,6 +8,7 @@ import video_capture
 if __name__ == "__main__":
     with multiprocessing.Manager() as manager:
         frames = manager.dict()
+        mode = manager.Value('s', 'HALT')
 
         # Camera indexes
         camera_indexes = [0, 2]
