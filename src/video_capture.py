@@ -3,7 +3,6 @@ import time
 import os
 from datetime import datetime
 import signal
-import sys
 
 SAVE_DIR = '../videos/'
 
@@ -39,27 +38,30 @@ def capture_video(frames, video_source=0, video_length=5, fps=30):
 
     new_file_started = False
     frame_size = (frame.shape[1], frame.shape[0])
-    start_time = time.time()
 
     print(f'Frame size: {frame_size}')
 
     out, video_filename = create_new_video_file(frame_size)
 
-    while True:
-        frame = frames[video_source]
-        if frame is None:
-            continue
+    try:
+        while True:
+            frame = frames[video_source]
+            if frame is None:
+                continue
 
-        out.write(frame)
+            out.write(frame)
 
-        current_time = datetime.now()
-        if current_time.minute % video_length == 0 and current_time.second == 0:
-            if not new_file_started:
-                out.release()
-                out, video_filename = create_new_video_file(frame_size)
-                new_file_started = True
-        else:
-            new_file_started = False
+            current_time = datetime.now()
+            if current_time.minute % video_length == 0 and current_time.second == 0:
+                if not new_file_started:
+                    out.release()
+                    out, video_filename = create_new_video_file(frame_size)
+                    new_file_started = True
+            else:
+                new_file_started = False
 
-    out.release()
-    cv2.destroyAllWindows()
+    except KeyboardInterrupt:
+        print('Video capture stopped by user')
+    finally:
+        out.release()
+        cv2.destroyAllWindows()

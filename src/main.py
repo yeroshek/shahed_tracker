@@ -1,5 +1,4 @@
 import multiprocessing
-import cv2
 
 import frame_manager
 import video_streaming

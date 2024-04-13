@@ -1,4 +1,4 @@
-from gpiozero import Device, PWMOutputDevice, DigitalInputDevice, Servo
+from gpiozero import Device, Servo
 from gpiozero.pins.pigpio import PiGPIOFactory
 from time import sleep
 
