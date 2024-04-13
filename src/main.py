@@ -2,6 +2,7 @@ import multiprocessing
 import threading
 from gpiozero import Device, PWMOutputDevice, DigitalInputDevice, Servo
 from gpiozero.pins.pigpio import PiGPIOFactory
+from time import sleep
 
 import frame_manager
 import video_streaming
@@ -12,7 +13,6 @@ Device.pin_factory = PiGPIOFactory()
 buttonIn = DigitalInputDevice(20)
 buttonOut = PWMOutputDevice(21)
 
-buttonOut.on()
 
 def manage_mode_scan_process(mode, mode_scan_process):
     while True:
@@ -35,6 +35,9 @@ if __name__ == "__main__":
 
         # Camera indexes
         camera_indexes = [0, 2]
+        
+        sleep(2)
+        buttonOut.on()
 
         # Start frame manager and video capture processes for each camera
         frame_manager_processes = []
@@ -43,10 +46,13 @@ if __name__ == "__main__":
             frame_manager_process = multiprocessing.Process(target=frame_manager.capture_frames, args=(frames, index))
             frame_manager_process.start()
             frame_manager_processes.append(frame_manager_process)
-
+            
             video_capture_process = multiprocessing.Process(target=video_capture.capture_video, args=(frames, index))
             video_capture_process.start()
             video_capture_processes.append(video_capture_process)
+            
+            
+        print("frames", frames)
 
         # Start video streaming process
         app = video_streaming.video_streaming(frames, mode)

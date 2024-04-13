@@ -1,5 +1,7 @@
 import cv2
 import datetime
+import os
+import shutil
 
 def addTimestamp(frame):
     if frame is None:
@@ -30,3 +32,16 @@ def addTimestamp(frame):
     # Add text to frame
     cv2.putText(frame, current_time, text_position, font, font_scale, stroke_color, stroke*2, lineType=cv2.LINE_AA)
     cv2.putText(frame, current_time, text_position, font, font_scale, color, stroke, lineType=cv2.LINE_AA)
+
+
+def getFilePath(relativePath):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(current_dir, relativePath)
+
+
+
+def get_free_space(path='/'):
+    """ Returns the free space in gigabytes. """
+    total, used, free = shutil.disk_usage(path)
+
+    return free / (2**30)  # Convert bytes to gigabytes

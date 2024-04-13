@@ -8,7 +8,7 @@ from helper import addTimestamp
 
 def capture_frames(frames, camera_id):
     # Тут поки що захардкодив теплак
-    if camera_id == 2:
+    if camera_id == 2:  
         cap = lib.ht301_hacklib.HT301(camera_id)
     else:
         cap = cv2.VideoCapture(camera_id)
