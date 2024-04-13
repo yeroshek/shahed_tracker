@@ -26,8 +26,15 @@ def smooth_transition(start, end, steps):
 
 def scan_vertical():
     current_value = servoVertical.value
+    if current_value is None:
+        current_value = VERTICAL_MIN
+
     target_value = VERTICAL_MAX if current_value == VERTICAL_MIN else VERTICAL_MIN
+
+    print(f'Current value {current_value}, target value {target_value}')
+
     for value in smooth_transition(current_value, target_value, VERTICAL_STEPS):
+        print(f'Set value {value}')
         servoVertical.value = value
         sleep(SLEEP_VERTICAL_TIME / VERTICAL_STEPS)
 
