@@ -18,7 +18,7 @@ def capture_video(frames, video_source=0, video_length=5, fps=30):
         os.makedirs(save_dir_path, exist_ok=True)
 
         video_filename = os.path.join(save_dir_path, f'video_{timestamp}_{video_source}.mp4')
-        return cv2.VideoWriter(video_filename, fourcc, fps, frame_size), video_filename
+        return cv2.VideoWriter(video_filename, fourcc, fps, frame_size)
 
     # A precaution to release the video writer when the script is interrupted
     def signal_handler(sig, frame):
@@ -46,7 +46,7 @@ def capture_video(frames, video_source=0, video_length=5, fps=30):
 
     print(f'Frame size: {frame_size}')
 
-    out, video_filename = create_new_video_file(frame_size)
+    out = create_new_video_file(frame_size)
 
     try:
         while True:
@@ -60,7 +60,7 @@ def capture_video(frames, video_source=0, video_length=5, fps=30):
             if current_time.minute % video_length == 0 and current_time.second == 0:
                 if not new_file_started:
                     out.release()
-                    out, video_filename = create_new_video_file(frame_size)
+                    out = create_new_video_file(frame_size)
                     new_file_started = True
             else:
                 new_file_started = False
