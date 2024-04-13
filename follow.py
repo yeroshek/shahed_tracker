@@ -23,7 +23,7 @@ servoVertical.value = VERTICAL_MIN
 
 app = Flask(__name__)
 
-orientation = 180 # 0, 90, 180, 270
+orientation = 0 # 0, 90, 180, 270
 
 def rotate_frame(frame, orientation):
     if orientation == 0:

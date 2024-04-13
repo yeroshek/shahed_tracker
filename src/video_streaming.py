@@ -5,6 +5,11 @@ from flask import Flask, Response, abort
 app = Flask(__name__)
 
 def video_streaming(frames):
+    @app.route('/')
+    def index():
+        links = [f"<a href='/stream/{id}'>Camera {id}</a>" for id in frames.keys()]
+        return "<br>".join(links)
+
     @app.route('/stream/<int:camera_id>')
     def stream(camera_id):
         if camera_id not in frames:
